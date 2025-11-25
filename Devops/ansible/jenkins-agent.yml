@@ -1,53 +1,40 @@
 ---
-- name: Setup Jenkins Agent (build server)
+# Playbook  : jenkins-agent.yml
+# Purpose   : Configure Jenkins build agent on Ubuntu server
+
+- name: Setup Jenkins Build Agent
   hosts: jenkins_agent
   become: yes
+
+  vars:
+    java_package_name: openjdk-17-jdk
 
   tasks:
     - name: Update apt cache
       apt:
         update_cache: yes
+        cache_valid_time: 3600
 
-    - name: Install basic tools
+    - name: Install Java (required for connecting agent)
       apt:
-        name:
-          - git
-          - openjdk-17-jdk
-          - maven
-          - curl
-          - apt-transport-https
-          - ca-certificates
-          - gnupg
-          - lsb-release
+        name: "{{ java_package_name }}"
         state: present
 
-    - name: Add Docker GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+    - name: Create a directory for Jenkins agent
+      file:
+        path: /opt/jenkins
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
 
-    - name: Add Docker repository
-      apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
-        state: present
-
-    - name: Install Docker
+    - name: Install Git (optional but useful)
       apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
+        name: git
         state: present
-        update_cache: yes
 
-    - name: Add ubuntu user to docker group
-      user:
-        name: ubuntu
-        groups: docker
-        append: yes
-
-    - name: Enable and start Docker
+    - name: Enable SSH service (needed for Jenkins master connection)
       service:
-        name: docker
+        name: ssh
         state: started
         enabled: yes
