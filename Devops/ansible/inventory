@@ -1,0 +1,15 @@
+[jenkins_master]
+50.18.29.233
+
+[jenkins_agent]
+52.9.205.203
+
+[app_server]
+13.52.112.32
+
+[monitoring_server]
+54.176.215.76
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/madhav-devops-key.pem

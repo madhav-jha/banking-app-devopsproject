@@ -202,3 +202,43 @@ resource "aws_instance" "monitoring_server" {
     Role = "monitoring"
   }
 }
+
+# 1. Elastic IP for Jenkins Master
+resource "aws_eip" "jenkins_master_eip" {
+  vpc      = true
+  instance = aws_instance.jenkins_master.id
+
+  tags = {
+    Name = "${var.project_name}-jenkins-master-eip"
+  }
+}
+
+# 2. Elastic IP for Jenkins Agent
+resource "aws_eip" "jenkins_agent_eip" {
+  vpc      = true
+  instance = aws_instance.jenkins_agent.id
+
+  tags = {
+    Name = "${var.project_name}-jenkins-agent-eip"
+  }
+}
+
+# 3. Elastic IP for App Server
+resource "aws_eip" "app_server_eip" {
+  vpc      = true
+  instance = aws_instance.app_server.id
+
+  tags = {
+    Name = "${var.project_name}-app-server-eip"
+  }
+}
+
+# 4. Elastic IP for Monitoring Server
+resource "aws_eip" "monitoring_server_eip" {
+  vpc      = true
+  instance = aws_instance.monitoring_server.id
+
+  tags = {
+    Name = "${var.project_name}-monitoring-eip"
+  }
+}
