@@ -9,184 +9,196 @@ terraform {
   }
 }
 
-# provider config (using us-west-1)
 provider "aws" {
-  region = "us-west-1"
+  region = var.aws_region
 }
 
-# basic variables
-variable "ami_id" {
-  description = "Ubuntu 22.04 LTS AMI id (us-west-1)"
-  default     = "ami-04f34746e5e1ec0fe"
+# VPC
+resource "aws_vpc" "main_vpc" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+
+  tags = {
+    Name = "${var.project_name}-vpc"
+  }
 }
 
-variable "key_name" {
-  description = "existing AWS key pair name"
-  default     = "devops-key"
+# Public subnet 1
+resource "aws_subnet" "public_subnet_1" {
+  vpc_id                  = aws_vpc.main_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true
+  availability_zone       = "${var.aws_region}a"
+
+  tags = {
+    Name = "${var.project_name}-public-1"
+  }
 }
 
-variable "vpc_id" {
-  description = "VPC id where I want to create servers"
-  default     = "vpc-0687fbf273a4bf486"   
+# Public subnet 2
+resource "aws_subnet" "public_subnet_2" {
+  vpc_id                  = aws_vpc.main_vpc.id
+  cidr_block              = "10.0.2.0/24"
+  map_public_ip_on_launch = true
+  availability_zone       = "${var.aws_region}c"
+
+  tags = {
+    Name = "${var.project_name}-public-2"
+  }
 }
 
-# simple security group for this lab
-resource "aws_security_group" "devops_sg" {
-  name        = "devops-sg"
-  description = "security group for devops project"
-  vpc_id      = var.vpc_id
+# Internet Gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main_vpc.id
 
-  # SSH
+  tags = {
+    Name = "${var.project_name}-igw"
+  }
+}
+
+# Route Table
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.main_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "${var.project_name}-public-rt"
+  }
+}
+
+# Route table association
+resource "aws_route_table_association" "public_1_assoc" {
+  subnet_id      = aws_subnet.public_subnet_1.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "public_2_assoc" {
+  subnet_id      = aws_subnet.public_subnet_2.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# Security group
+resource "aws_security_group" "main_sg" {
+  name        = "${var.project_name}-sg"
+  description = "Allow SSH, HTTP, HTTPS, and custom ports"
+  vpc_id      = aws_vpc.main_vpc.id
+
   ingress {
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.public_cidr]
   }
 
-
-
-  # sample NodePort service
   ingress {
-    from_port   = 31002
-    to_port     = 31002
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.public_cidr]
   }
 
-  # K8s API server
   ingress {
-    from_port   = 6443
-    to_port     = 6443
+    description = "Jenkins"
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.public_cidr]
   }
 
-  # allow all outbound
+  ingress {
+    description = "Custom web 3000-3100"
+    from_port   = 3000
+    to_port     = 3100
+    protocol    = "tcp"
+    cidr_blocks = [var.public_cidr]
+  }
+
+  ingress {
+    description = "Prometheus/Grafana common ports"
+    from_port   = 9000
+    to_port     = 9200
+    protocol    = "tcp"
+    cidr_blocks = [var.public_cidr]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = "${var.project_name}-sg"
+  }
 }
 
-# jenkins master
+# ----- EC2 INSTANCES (4 TOTAL) -----
+
+# AMI: ami-04f34746e5e1ec0fe (Ubuntu 22.04 in us-west-1)
+locals {
+  ubuntu_ami = "ami-04f34746e5e1ec0fe"
+}
+
+# 1. Jenkins Master
 resource "aws_instance" "jenkins_master" {
-  ami                    = var.ami_id
-  instance_type          = "t3.medium"
+  ami                    = local.ubuntu_ami
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public_subnet_1.id
+  vpc_security_group_ids = [aws_security_group.main_sg.id]
   key_name               = var.key_name
-  vpc_security_group_ids = [aws_security_group.devops_sg.id]
 
   tags = {
-    Name = "jenkins-master"
-    Role = "jenkins_master"
+    Name = "${var.project_name}-jenkins-master"
+    Role = "jenkins-master"
   }
 }
 
-# jenkins agent
+# 2. Jenkins Agent
 resource "aws_instance" "jenkins_agent" {
-  ami                    = var.ami_id
-  instance_type          = "t3.medium"
+  ami                    = local.ubuntu_ami
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public_subnet_1.id
+  vpc_security_group_ids = [aws_security_group.main_sg.id]
   key_name               = var.key_name
-  vpc_security_group_ids = [aws_security_group.devops_sg.id]
 
   tags = {
-    Name = "jenkins-agent"
-    Role = "jenkins_agent"
+    Name = "${var.project_name}-jenkins-agent"
+    Role = "jenkins-agent"
   }
 }
 
-# k8s master
-resource "aws_instance" "k8s_master" {
-  ami                    = var.ami_id
-  instance_type          = "t3.medium"
+# 3. App Server (Docker)
+resource "aws_instance" "app_server" {
+  ami                    = local.ubuntu_ami
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public_subnet_2.id
+  vpc_security_group_ids = [aws_security_group.main_sg.id]
   key_name               = var.key_name
-  vpc_security_group_ids = [aws_security_group.devops_sg.id]
 
   tags = {
-    Name = "k8s-master"
-    Role = "k8s_master"
+    Name = "${var.project_name}-app-server"
+    Role = "app-server"
   }
 }
 
-# k8s worker nodes (3)
-resource "aws_instance" "k8s_worker" {
-  count                  = 3
-  ami                    = var.ami_id
-  instance_type          = "t3.small"
+# 4. Monitoring Server
+resource "aws_instance" "monitoring_server" {
+  ami                    = local.ubuntu_ami
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public_subnet_2.id
+  vpc_security_group_ids = [aws_security_group.main_sg.id]
   key_name               = var.key_name
-  vpc_security_group_ids = [aws_security_group.devops_sg.id]
 
   tags = {
-    Name = "k8s-worker-${count.index + 1}"
-    Role = "k8s_worker"
-  }
-}
-
-# monitoring node
-resource "aws_instance" "monitoring" {
-  ami                    = var.ami_id
-  instance_type          = "t3.small"
-  key_name               = var.key_name
-  vpc_security_group_ids = [aws_security_group.devops_sg.id]
-
-  tags = {
-    Name = "monitoring-node"
+    Name = "${var.project_name}-monitoring"
     Role = "monitoring"
   }
-}
-
-# elastic ip for few important servers
-resource "aws_eip" "jenkins_master_eip" {
-  vpc      = true
-  instance = aws_instance.jenkins_master.id
-
-  tags = {
-    Name = "jenkins-master-eip"
-  }
-}
-
-resource "aws_eip" "jenkins_agent_eip" {
-  vpc      = true
-  instance = aws_instance.jenkins_agent.id
-
-  tags = {
-    Name = "jenkins-agent-eip"
-  }
-}
-
-resource "aws_eip" "k8s_master_eip" {
-  vpc      = true
-  instance = aws_instance.k8s_master.id
-
-  tags = {
-    Name = "k8s-master-eip"
-  }
-}
-
-# outputs for quick view
-output "jenkins_master_eip" {
-  value       = aws_eip.jenkins_master_eip.public_ip
-  description = "jenkins master public ip"
-}
-
-output "jenkins_agent_eip" {
-  value       = aws_eip.jenkins_agent_eip.public_ip
-  description = "jenkins agent public ip"
-}
-
-output "k8s_master_eip" {
-  value       = aws_eip.k8s_master_eip.public_ip
-  description = "k8s master public ip"
-}
-
-output "k8s_worker_ips" {
-  value       = [for w in aws_instance.k8s_worker : w.public_ip]
-  description = "k8s workers public ips"
-}
-
-output "monitoring_ip" {
-  value       = aws_instance.monitoring.public_ip
-  description = "monitoring node public ip"
 }
