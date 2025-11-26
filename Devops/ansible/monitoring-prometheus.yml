@@ -1,0 +1,134 @@
+---
+# Playbook  : monitoring-prometheus.yml
+# Purpose   : Install Prometheus on monitoring server
+
+- name: Install Prometheus on monitoring server
+  hosts: monitoring_server
+  become: yes
+
+  vars:
+    prometheus_version: "2.55.1"
+
+  tasks:
+    - name: Create prometheus user
+      user:
+        name: prometheus
+        shell: /usr/sbin/nologin
+        system: yes
+        create_home: no
+
+    - name: Create directories for Prometheus
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+      loop:
+        - /etc/prometheus
+        - /var/lib/prometheus
+
+    - name: Download Prometheus tarball
+      get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        dest: /tmp/prometheus.tar.gz
+        mode: '0644'
+
+    - name: Extract Prometheus
+      unarchive:
+        src: /tmp/prometheus.tar.gz
+        dest: /tmp/
+        remote_src: yes
+        creates: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
+
+    - name: Copy Prometheus binaries
+      copy:
+        src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: '0755'
+        remote_src: yes
+      loop:
+        - prometheus
+        - promtool
+
+
+    - name: Copy Prometheus consoles
+      command: cp -r /tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }} /etc/prometheus/
+      loop:
+        - consoles
+        - console_libraries
+
+
+    - name: Create Prometheus config file
+      copy:
+        dest: /etc/prometheus/prometheus.yml
+        owner: prometheus
+        group: prometheus
+        mode: '0644'
+        content: |
+          global:
+            scrape_interval: 15s
+
+          scrape_configs:
+            - job_name: 'jenkins_master'
+              static_configs:
+                - targets: ['50.18.29.233:9100']
+
+            - job_name: 'jenkins_agent'
+              static_configs:
+                - targets: ['52.9.205.203:9100']
+
+            - job_name: 'app_server'
+              static_configs:
+                - targets: ['13.52.112.32:9100']
+
+            - job_name: 'monitoring_server'
+              static_configs:
+                - targets: ['54.176.215.76:9100']
+
+    - name: Fix ownership of Prometheus console directories
+      file:
+        path: "/etc/prometheus/{{ item }}"
+        state: directory
+        owner: prometheus
+        group: prometheus
+        recurse: yes
+      loop:
+        - consoles
+        - console_libraries
+
+    - name: Create systemd service for Prometheus
+      copy:
+        dest: /etc/systemd/system/prometheus.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Prometheus Monitoring
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=prometheus
+          Group=prometheus
+          Type=simple
+          ExecStart=/usr/local/bin/prometheus \
+            --config.file=/etc/prometheus/prometheus.yml \
+            --storage.tsdb.path=/var/lib/prometheus \
+            --web.console.templates=/etc/prometheus/consoles \
+            --web.console.libraries=/etc/prometheus/console_libraries
+
+          [Install]
+          WantedBy=multi-user.target
+
+      notify: restart prometheus
+
+    - name: Enable Prometheus service
+      systemd:
+        name: prometheus
+        enabled: yes
+
+  handlers:
+    - name: restart prometheus
+      systemd:
+        name: prometheus
+        state: restarted
