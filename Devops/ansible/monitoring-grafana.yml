@@ -1,0 +1,34 @@
+---
+# Playbook  : monitoring-grafana.yml
+# Purpose   : Install Grafana on monitoring server
+
+- name: Install Grafana on monitoring server
+  hosts: monitoring_server
+  become: yes
+
+  tasks:
+    - name: Add Grafana APT key
+      apt_key:
+        url: https://apt.grafana.com/gpg.key
+        state: present
+
+    - name: Add Grafana APT repository
+      apt_repository:
+        repo: "deb https://apt.grafana.com stable main"
+        state: present
+        filename: grafana
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Grafana
+      apt:
+        name: grafana
+        state: present
+
+    - name: Enable and start Grafana service
+      systemd:
+        name: grafana-server
+        enabled: yes
+        state: started
