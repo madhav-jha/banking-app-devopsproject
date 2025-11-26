@@ -1,19 +1,24 @@
 pipeline {
+
     
     agent { label 'jenkins-agent' }
 
-
+    
     triggers {
         githubPush()
     }
 
+    
     environment {
-        APP_NAME   = "banking-app"
-        DOCKER_USER = "jhamadhav2025"  
+        APP_NAME    = "banking-app"
+        DOCKER_USER = "jhamadhav2025"
+        DEPLOY_HOST = "13.52.112.32"
+        PEM_PATH    = "/home/ubuntu/.ssh/madhav-devops-key.pem"
     }
 
     stages {
 
+        
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -21,6 +26,7 @@ pipeline {
             }
         }
 
+        
         stage('Maven Build') {
             steps {
                 dir('app') {
@@ -29,6 +35,7 @@ pipeline {
             }
         }
 
+       
         stage('Docker Build') {
             steps {
                 dir('app') {
@@ -37,7 +44,8 @@ pipeline {
             }
         }
 
-        stage('Docker Login & Push') {
+       
+        stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub',
@@ -46,18 +54,18 @@ pipeline {
                 )]) {
                     sh """
                         echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
-                        docker tag ${APP_NAME} $DH_USER/${APP_NAME}:latest
-                        docker push $DH_USER/${APP_NAME}:latest
+                        docker tag ${APP_NAME} ${DH_USER}/${APP_NAME}:latest
+                        docker push ${DH_USER}/${APP_NAME}:latest
                     """
                 }
             }
         }
 
-        stage('Deploy to App Server') {
+       
+        stage('Deploy to EC2') {
             steps {
-                
                 sh """
-                    ssh -o StrictHostKeyChecking=no -i ~/.ssh/madhav-devops-key.pem ubuntu@13.52.112.32 '
+                    ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${DEPLOY_HOST} '
                         docker pull ${DOCKER_USER}/${APP_NAME}:latest &&
                         docker stop ${APP_NAME} || true &&
                         docker rm ${APP_NAME} || true &&
@@ -68,20 +76,22 @@ pipeline {
         }
     }
 
+    
     post {
-    success {
-        emailext(
-            subject: "SUCCESS: ${JOB_NAME} #${BUILD_NUMBER}",
-            body: "Build SUCCESSFUL.\nJob: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}",
-            to: "jhamadhav2025@gmail.com"
-        )
-    }
+        success {
+            emailext(
+                subject: "SUCCESS: ${JOB_NAME} #${BUILD_NUMBER}",
+                body: "Build SUCCESSFUL.\nJob: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}",
+                to: "jhamadhav2025@gmail.com"
+            )
+        }
 
-    failure {
-        emailext(
-            subject: "FAILED: ${JOB_NAME} #${BUILD_NUMBER}",
-            body: "Build FAILED.\nPlease check Jenkins console output.",
-            to: "jhamadhav2025@gmail.com"
-        )
+        failure {
+            emailext(
+                subject: "FAILED: ${JOB_NAME} #${BUILD_NUMBER}",
+                body: "Build FAILED.",
+                to: "jhamadhav2025@gmail.com"
+            )
+        }
     }
 }
