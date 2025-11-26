@@ -20,6 +20,11 @@
         name: "{{ java_package_name }}"
         state: present
 
+    - name: Install Maven (for building Java projects)
+      apt:
+        name: maven
+        state: present
+
     - name: Create a directory for Jenkins agent
       file:
         path: /opt/jenkins
@@ -28,12 +33,12 @@
         group: ubuntu
         mode: '0755'
 
-    - name: Install Git (optional but useful)
+    - name: Install Git 
       apt:
         name: git
         state: present
 
-    - name: Enable SSH service (needed for Jenkins master connection)
+    - name: Enable SSH service and ensure it's running
       service:
         name: ssh
         state: started

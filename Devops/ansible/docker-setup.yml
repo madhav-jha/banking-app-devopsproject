@@ -1,9 +1,9 @@
 ---
 # Playbook  : docker-setup.yml
-# Purpose   : Install Docker on app server
+# Purpose   : Install Docker on servers
 
-- name: Install Docker on app server
-  hosts: app_server
+- name: Install Docker on Docker hosts
+  hosts: jenkins_agent,app_server
   become: yes
 
   tasks:

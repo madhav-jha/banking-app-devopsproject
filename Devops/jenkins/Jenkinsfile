@@ -69,19 +69,19 @@ pipeline {
     }
 
     post {
-        success {
-            emailext(
-                subject: "Jenkins Build SUCCESS: \${JOB_NAME} #\${BUILD_NUMBER}",
-                body: "Build SUCCESSFUL for job \${JOB_NAME} #\${BUILD_NUMBER}\n\nCheck Jenkins for more details.",
-                to: "jhamadhav2025@gmail.com"
-            )
-        }
-        failure {
-            emailext(
-                subject: "Jenkins Build FAILED: \${JOB_NAME} #\${BUILD_NUMBER}",
-                body: "Build FAILED for job \${JOB_NAME} #\${BUILD_NUMBER}\n\nPlease check console output.",
-                to: "jhamadhav2025@gmail.com"
-            )
-        }
+    success {
+        emailext(
+            subject: "SUCCESS: ${JOB_NAME} #${BUILD_NUMBER}",
+            body: "Build SUCCESSFUL.\nJob: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}",
+            to: "jhamadhav2025@gmail.com"
+        )
+    }
+
+    failure {
+        emailext(
+            subject: "FAILED: ${JOB_NAME} #${BUILD_NUMBER}",
+            body: "Build FAILED.\nPlease check Jenkins console output.",
+            to: "jhamadhav2025@gmail.com"
+        )
     }
 }
