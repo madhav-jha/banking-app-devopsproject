@@ -1,84 +1,69 @@
 pipeline {
-    agent { label 'banking-agent' }
+    
+    agent { label 'jenkins-agent' }
+
 
     triggers {
         githubPush()
     }
 
+    environment {
+        APP_NAME   = "banking-app"
+        DOCKER_USER = "jhamadhav2025"  
+    }
+
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                echo "Pulling latest code..."
                 git branch: 'main',
-                    url: 'https://github.com/madhav-jha/banking-app-devops.git'
+                    url: 'https://github.com/madhav-jha/banking-app-devopsproject.git'
             }
         }
 
-        stage('Build') {
+        stage('Maven Build') {
             steps {
-                echo "Running Maven build..."
                 dir('app') {
                     sh 'mvn clean package'
                 }
             }
         }
 
-        stage('Tests') {
+        stage('Docker Build') {
             steps {
-                echo "Running tests..."
                 dir('app') {
-                    sh 'mvn test'
+                    sh "docker build -t ${APP_NAME} ."
                 }
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Docker Login & Push') {
             steps {
-                dir('app') {
-                    script {
-                        def image = "jhamadhav2025/banking-app:${BUILD_NUMBER}"
-
-                        echo "Building Docker image: ${image}"
-                        sh "docker build -t ${image} ."
-
-                        withCredentials([
-                            usernamePassword(
-                                credentialsId: 'docker-hub-creds',
-                                usernameVariable: 'DOCKER_USER',
-                                passwordVariable: 'DOCKER_PASS'
-                            )
-                        ]) {
-                            sh """
-                              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                              docker push ${image}
-                              docker logout
-                            """
-                        }
-                    }
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DH_USER',
+                    passwordVariable: 'DH_PASS'
+                )]) {
+                    sh """
+                        echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+                        docker tag ${APP_NAME} $DH_USER/${APP_NAME}:latest
+                        docker push $DH_USER/${APP_NAME}:latest
+                    """
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to App Server') {
             steps {
-                echo "Deploying to Kubernetes..."
-
-                sh '''
-                export KUBECONFIG=/home/ubuntu/.kube/config
-
-                sed -i "s/{{BUILD_NUMBER}}/${BUILD_NUMBER}/g" Devops/k8s/deployment.yaml
-
-                kubectl apply --validate=false -f Devops/k8s/deployment.yaml
-                kubectl apply --validate=false -f Devops/k8s/service.yaml
-                '''
-            }
-        }
-
-        stage('Archive Artifact') {
-            steps {
-                echo "Archiving JAR..."
-                archiveArtifacts artifacts: 'app/target/*.jar', fingerprint: true
+                
+                sh """
+                    ssh -o StrictHostKeyChecking=no -i ~/.ssh/madhav-devops-key.pem ubuntu@13.52.112.32 '
+                        docker pull ${DOCKER_USER}/${APP_NAME}:latest &&
+                        docker stop ${APP_NAME} || true &&
+                        docker rm ${APP_NAME} || true &&
+                        docker run -d -p 8080:8082 --name ${APP_NAME} ${DOCKER_USER}/${APP_NAME}:latest
+                    '
+                """
             }
         }
     }
@@ -86,16 +71,16 @@ pipeline {
     post {
         success {
             emailext(
-                to: "jhamadhav2025@gmail.com",
-                subject: "SUCCESS: ${JOB_NAME} #${BUILD_NUMBER}",
-                body: "Build successful. Logs: ${BUILD_URL}console"
+                subject: "Jenkins Build SUCCESS: \${JOB_NAME} #\${BUILD_NUMBER}",
+                body: "Build SUCCESSFUL for job \${JOB_NAME} #\${BUILD_NUMBER}\n\nCheck Jenkins for more details.",
+                to: "jhamadhav2025@gmail.com"
             )
         }
         failure {
             emailext(
-                to: "jhamadhav2025@gmail.com",
-                subject: "FAILED: ${JOB_NAME} #${BUILD_NUMBER}",
-                body: "Build failed. Check logs: ${BUILD_URL}console"
+                subject: "Jenkins Build FAILED: \${JOB_NAME} #\${BUILD_NUMBER}",
+                body: "Build FAILED for job \${JOB_NAME} #\${BUILD_NUMBER}\n\nPlease check console output.",
+                to: "jhamadhav2025@gmail.com"
             )
         }
     }
