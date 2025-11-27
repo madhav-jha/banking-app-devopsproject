@@ -1,0 +1,13 @@
+replicaCount: 1
+
+image:
+  repository: jhamadhav2025/banking-app
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+containerPort: 8082
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30080
