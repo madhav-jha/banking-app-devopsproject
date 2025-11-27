@@ -76,6 +76,22 @@ pipeline {
         }
     }
 
+     stage('Deploy to Kubernetes via Helm') {
+      steps {
+        sshagent(['k8s-key']) {
+            sh """
+                ssh -o StrictHostKeyChecking=no ubuntu@<K8S_PUBLIC_IP> '
+                    echo "Running Helm Deployment..."
+                    cd /home/ubuntu/banking-helm/banking-app &&
+                    helm upgrade --install banking-app ./ &&
+                    kubectl get pods &&
+                    kubectl get svc
+                '
+            """
+        }
+    }
+}
+
     
     post {
         success {
