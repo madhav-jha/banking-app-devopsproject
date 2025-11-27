@@ -1,24 +1,21 @@
 pipeline {
 
-    
     agent { label 'jenkins-agent' }
 
-    
     triggers {
         githubPush()
     }
 
-    
     environment {
         APP_NAME    = "banking-app"
         DOCKER_USER = "jhamadhav2025"
         DEPLOY_HOST = "13.52.112.32"
         PEM_PATH    = "/home/ubuntu/.ssh/madhav-devops-key.pem"
+        K8S_HOST    = "54.215.183.246"   // Kubernetes EC2 public IP
     }
 
     stages {
 
-        
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -26,7 +23,6 @@ pipeline {
             }
         }
 
-        
         stage('Maven Build') {
             steps {
                 dir('app') {
@@ -35,7 +31,6 @@ pipeline {
             }
         }
 
-       
         stage('Docker Build') {
             steps {
                 dir('app') {
@@ -44,7 +39,6 @@ pipeline {
             }
         }
 
-       
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
@@ -61,7 +55,6 @@ pipeline {
             }
         }
 
-       
         stage('Deploy to EC2') {
             steps {
                 sh """
@@ -74,25 +67,22 @@ pipeline {
                 """
             }
         }
-    }
 
-     stage('Deploy to Kubernetes via Helm') {
-      steps {
-        sshagent(['k8s-key']) {
-            sh """
-                ssh -o StrictHostKeyChecking=no ubuntu@54.215.183.246 '
-                    echo "Running Helm Deployment..."
-                    cd /home/ubuntu/banking-helm/banking-app &&
-                    helm upgrade --install banking-app ./ &&
-                    kubectl get pods &&
-                    kubectl get svc
-                '
-            """
+        stage('Deploy to Kubernetes via Helm') {
+            steps {
+                sh """
+                    ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${K8S_HOST} '
+                        echo "Running Helm Deployment..." &&
+                        cd /home/ubuntu/banking-helm/banking-app &&
+                        helm upgrade --install banking-app ./ &&
+                        kubectl get pods &&
+                        kubectl get svc
+                    '
+                """
+            }
         }
     }
-}
 
-    
     post {
         success {
             emailext(
@@ -111,3 +101,4 @@ pipeline {
         }
     }
 }
+
