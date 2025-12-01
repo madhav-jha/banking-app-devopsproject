@@ -1,6 +1,41 @@
      :::: 🏦 Project: “Banking App – End-to-End DevOps CI/CD with AWS, Docker, Jenkins & Kubernetes (Helm)” ::::
 	 
-::-> This project demonstrates a **real-world Banking Domain Application** automated with a full DevOps workflow. From source code → CI/CD → Dockerization → Cloud Deployment → Kubernetes (Helm) → Monitoring  every stage has been            implemented exactly like a production-grade setup.
+::-> This project is built as a complete End-to-End DevOps solution for the Banking & Finance Domain problem statement provided in the “Banking Domain – DevOps Project.pdf”.
+
+=====> The company in the scenario was struggling with:
+
+            - A monolithic application that was difficult to build & update
+
+		    - Manual deployments, which caused delays and errors
+
+            - Lack of scalable infrastructure
+
+            - No automated CICD pipeline
+
+            - No centralized monitoring or alerts
+
+            - Time-consuming manual server configuration
+
+            - Difficulty rolling out frequent and reliable releases
+
+=====> To solve these challenges, this project implements a fully automated, production-ready DevOps pipeline using modern tools and cloud-native technologies.
+::-> The solution covers:
+
+        Infrastructure Automation → Terraform (VPC, Subnets, EC2, Security Groups, EIP)
+
+        Server Configuration Automation → Ansible (Jenkins, Docker, Prometheus, Grafana setup)
+
+        CICD Pipeline → Jenkins (GitHub → Maven → Docker → DockerHub → EC2)
+
+        Containerization → Docker (Application packaged as image)
+
+        Orchestration & Scaling → Kubernetes + Helm
+
+        Monitoring & Alerting → Prometheus + Grafana dashboards & alerts
+
+        Continuous Delivery → Automated Deployments to EC2 + Kubernetes
+
+This project converts the monolithic banking application into a cloud-ready, scalable microservice with fully automated build, test, deploy, and monitoring workflows — exactly solving the real-world problems mentioned in the certification use-case.
   
 ==> Official Project Scenario Document:-
   Full banking domain case-study is included in the repository:
@@ -66,12 +101,11 @@
    . 4 Elastic IPs
 	
    . 4 EC2 Instances & 1 instance manually create for K8s server
-    - Jenkins Master
-    - Jenkins Agent
-    - App Server
-    - Monitoring Server
-	- K8s Server (Mannually Create after Complete docker and jenkins) 
-
+              - Jenkins Master
+              - Jenkins Agent
+              - App Server
+              - Monitoring Server
+	          - K8s Server (Mannually Create after Complete docker and jenkins) 
 <img width="1792" height="1120" alt="Terraform apply" src="https://github.com/user-attachments/assets/0a508576-973d-47d8-89fc-ba3597830f0a" />
 <img width="1792" height="1120" alt="output" src="https://github.com/user-attachments/assets/7ec4b13e-0be5-4548-ba77-43a93a1b7d5a" />
 <img width="1792" height="1080" alt="Instance pic" src="https://github.com/user-attachments/assets/ced4b3ca-4d9a-4e28-a99e-c1278cb52236" />
@@ -83,11 +117,11 @@
 
 
 ::-> Important Commands Use For Terraform .                                                                                     
-       terraform init                          
-       terraform plan
-       terraform apply 
-       terraform destroy 
-          |
+               terraform init                          
+               terraform plan
+               terraform apply 
+               terraform destroy 
+          
  ::-> Key Fixes
    - AZ issue fixed (us-west-1b unsupported)
    - KeyPair NotFound error resolved
