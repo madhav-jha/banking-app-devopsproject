@@ -1,8 +1,9 @@
-     :::: 🏦 Project: “Banking App – End-to-End DevOps CI/CD with AWS, Docker, Jenkins & Kubernetes (Helm)” ::::
+ :::: 🏦 Project: “Banking App – End-to-End DevOps CI/CD with AWS, Docker, Jenkins & Kubernetes (Helm)” ::::
 	 
 ::-> This project is built as a complete End-to-End DevOps solution for the Banking & Finance Domain problem statement provided in the “Banking Domain – DevOps Project.pdf”.
 
 =====> The company in the scenario was struggling with:
+
 
             - A monolithic application that was difficult to build & update
 
@@ -17,8 +18,10 @@
             - Time-consuming manual server configuration
 
             - Difficulty rolling out frequent and reliable releases
+			
 
 =====> To solve these challenges, this project implements a fully automated, production-ready DevOps pipeline using modern tools and cloud-native technologies.
+
 ::-> The solution covers:
 
         Infrastructure Automation → Terraform (VPC, Subnets, EC2, Security Groups, EIP)
@@ -38,6 +41,7 @@
 This project converts the monolithic banking application into a cloud-ready, scalable microservice with fully automated build, test, deploy, and monitoring workflows — exactly solving the real-world problems mentioned in the certification use-case.
   
 ==> Official Project Scenario Document:-
+
   Full banking domain case-study is included in the repository:
             Banking Domain – DevOps Project.pdf
 <img width="1792" height="1078" alt="run locally" src="https://github.com/user-attachments/assets/a3588d25-93c4-49dc-9658-f1341cedf609" />
@@ -45,8 +49,10 @@ This project converts the monolithic banking application into a cloud-ready, sca
 
 
                         ::::====> 1. Project Overview <====::::
+						
 
 ::-> This is a real-world Banking System DevOps Implementation where the objective was to:
+
 
  - Fully automate application build, test & deployment
  - Use Infrastructure as Code (IaC)
@@ -56,6 +62,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
  - Deploy on Kubernetes using Helm
  - Monitor using Prometheus + Grafana
  - Follow complete DevOps lifecycle end-to-end
+ - 
 
 ::-> The application provides banking operations such as:
 
@@ -65,10 +72,13 @@ This project converts the monolithic banking application into a cloud-ready, sca
  - Deposit & Withdraw
  - Transaction management
  - Investment Banking etc.
+ - 
 
 ::-> This project replicates how a real company deploys production systems using DevOps.
 
+
                        ::::====> 2. Tools & Technologies Used <====::::
+					   
 											 
 	                         Category                        Tools                                
                 |----------------------------- | --------------------------------|
@@ -116,13 +126,15 @@ This project converts the monolithic banking application into a cloud-ready, sca
 <img width="1792" height="1120" alt="ssh-2" src="https://github.com/user-attachments/assets/a2e32ba4-2d9e-46f7-9495-ad7efc251188" />
 
 
-::-> Important Commands Use For Terraform .                                                                                     
+::-> Important Commands Use For Terraform .  
+
                terraform init                          
                terraform plan
                terraform apply 
                terraform destroy 
           
  ::-> Key Fixes
+ 
    - AZ issue fixed (us-west-1b unsupported)
    - KeyPair NotFound error resolved
  
@@ -140,6 +152,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
          - Grafana
 
  ::-> Example Command:
+ 
         ansible-playbook -i inventory jenkins-master.yml
 		ansible-playbook -i inventory jenkins-agent.yml
 		ansible-playbook -i inventory docker-setup.yml
@@ -154,9 +167,11 @@ This project converts the monolithic banking application into a cloud-ready, sca
 <img width="1792" height="1120" alt="Grafana" src="https://github.com/user-attachments/assets/fcce6a93-240e-47d1-9363-3d648e33f649" />
 
    ::::===> Application Local Testing (Before Dockerization)
+   
              - Before building the Docker image, the Spring Boot application was tested locally to ensure it runs correctly.
 
   Commands used:-
+  
    ./mvnw clean package
    java -jar target/banking-0.0.1-SNAPSHOT.jar
             - The app successfully started on port 8082, confirming the build was stable before containerization.
@@ -167,12 +182,14 @@ This project converts the monolithic banking application into a cloud-ready, sca
                   :::::====> 6. Docker – Containerization <====:::::
 
 ====> Dockerfile:
+
       Base Image: eclipse-temurin:11-jdk
       Copies JAR
       Exposes port 8082
       ENTRYPOINT: java -jar app.jar	
 
 ====> Important Commands:
+
         docker build -t banking-app .
         docker run -p 8080:8082 banking-app
         docker tag banking-app username/banking-app
@@ -269,6 +286,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
        - Helm v3 installed
 
 ====> Helm Chart Structure:
+
          Chart.yaml
          values.yaml
          templates/
@@ -276,6 +294,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
              service.yaml
 
 ====> Deployment Command:
+
         helm upgrade --install banking-app ./
 
 
@@ -301,6 +320,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
 
 
                  ::::====> 10. End-to-End DevOps Pipeline Flow <====::::
+				 
 
 		1 Developer pushes code → GitHub
 
