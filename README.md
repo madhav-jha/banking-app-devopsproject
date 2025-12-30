@@ -62,7 +62,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
  - Deploy on Kubernetes using Helm
  - Monitor using Prometheus + Grafana
  - Follow complete DevOps lifecycle end-to-end
- - 
+
 
 ::-> The application provides banking operations such as:
 
@@ -72,7 +72,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
  - Deposit & Withdraw
  - Transaction management
  - Investment Banking etc.
- - 
+   
 
 ::-> This project replicates how a real company deploys production systems using DevOps.
 
@@ -94,11 +94,30 @@ This project converts the monolithic banking application into a cloud-ready, sca
                     | Monitoring               | Prometheus, Node Exporter, Grafana   
                     | OS                       | Ubuntu & MacOS                       
 
-                        ::::====> Architecture Diagram <====::::
+                       
+   ::-> Architecture Overview :-
+ 
+                             Developer
+                                 ↓
+                         GitHub (Source Code)
+                                 ↓
+                         Jenkins (CI Pipeline)                    
+                                 ↓
+                      Docker Build & Push (DockerHub)
+                                 ↓
+                   Kubernetes Cluster (Helm Deployment)
+                                 ↓
+                    Monitoring (Prometheus + Grafana)
+
+
+
+                                 ::::====> Architecture Diagram <====::::
+
 
  <img width="1433" height="596" alt="image" src="https://github.com/user-attachments/assets/60e9c48d-4a94-438f-b8c4-ab936390b0ea" />
+ 
 
-                 ::::-> 4. Terraform – AWS Infrastructure Automation <====::::
+                     ::::-> 4. Terraform – AWS Infrastructure Automation <====::::
 
  ::-> Terraform created:
 
@@ -183,11 +202,9 @@ This project converts the monolithic banking application into a cloud-ready, sca
 
 ====> Dockerfile:
 
-      Base Image: eclipse-temurin:11-jdk
-      Copies JAR
-      Exposes port 8082
-      ENTRYPOINT: java -jar app.jar	
+<img width="1792" height="1120" alt="Screenshot 2025-12-30 at 10 59 20 AM" src="https://github.com/user-attachments/assets/fd0f58ac-6d47-4921-a47a-3f8a109d505e" />
 
+     
 ====> Important Commands:
 
         docker build -t banking-app .
@@ -319,24 +336,34 @@ This project converts the monolithic banking application into a cloud-ready, sca
 <img width="1792" height="1120" alt="Screenshot 2025-11-27 at 2 18 52 PM" src="https://github.com/user-attachments/assets/81b38cf4-ee30-4281-8e73-4825f7ac9da7" />
 
 
-                 ::::====> 10. End-to-End DevOps Pipeline Flow <====::::
-				 
+        ::::====> 10. End-to-End DevOps Pipeline Flow <====:::
+	 
 
-		1 Developer pushes code → GitHub
+		                1 Developer pushes code → GitHub             
 
-        2 Webhook triggers Jenkins
+                        2 Webhook triggers Jenkins
+   
+                        3 Jenkins agent builds app & Docker image
 
-        3 Jenkins agent builds app & Docker image
+                        4 Jenkins pushes image → DockerHub
 
-        4 Jenkins pushes image → DockerHub
+                        5 Jenkins deploys Docker container → EC2
 
-        5 Jenkins deploys Docker container → EC2
+                        6 Jenkins deploys to Kubernetes → Helm
 
-        6 Jenkins deploys to Kubernetes → Helm
+                        7 Monitoring via Prometheus → Grafana
 
-        7 Monitoring via Prometheus → Grafana
+                        8 Alerts / Dashboard visible in Grafana
 
-        8 Alerts / Dashboard visible in Grafana
+
+
+::-> Note on Kubernetes Scope:
+
+         This project focuses on basic and stable Kubernetes deployment. Advanced setups like: Multi-node clusters Managed Kubernetes (EKS) are planned as future improvements.
+         Future Enhancements:
+         Migrate to AWS EKS Add worker nodes & autoscaling GitOps using ArgoCD Centralized logging Secure secret management
+
+                              👤 Author Madhav Jha DevOps Learner Hands-on with Linux, Docker, Jenkins, Kubernetes, Helm, AWS & Monitoring					
 
 
 
@@ -345,7 +372,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
 
 
 	   
-                                                                        Madhav Jha
+                                                                      
 
 
 
