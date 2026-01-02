@@ -89,9 +89,9 @@ This project converts the monolithic banking application into a cloud-ready, sca
                     | Cloud                    | AWS EC2, Elastic IP, Security Groups 
                     | IaC                      | Terraform                            
                     | Configuration Management | Ansible                              
-                    | Orchestration            | Kubernetes (RKE2 / K3s)              
+                    | Orchestration            | Kubernetes               
                     | Packaging                | Helm                                 
-                    | Monitoring               | Prometheus, Node Exporter, Grafana   
+                    | Monitoring               | Prometheus, Grafana   
                     | OS                       | Ubuntu & MacOS                       
 
                        
@@ -238,6 +238,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
         7.Email Notification
 
 ====> Key Features:
+
         - Webhooks from GitHub
 
         - Jenkins agent for builds
@@ -296,11 +297,11 @@ This project converts the monolithic banking application into a cloud-ready, sca
 
 ====> K8s Setup:
 
-       -Kubernetes installed on EC2
+        - Kubernetes installed on EC2
 
-       - kubectl configured
+        - kubectl configured
 
-       - Helm v3 installed
+        - Helm v3 installed
 
 ====> Helm Chart Structure:
 
@@ -316,6 +317,7 @@ This project converts the monolithic banking application into a cloud-ready, sca
 
 
 ====> Results:
+
         - Pod Running
 
         - Service NodePort (30080)
